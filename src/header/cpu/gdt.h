@@ -3,7 +3,14 @@
 
 #include "header/stdlib/stdtype.h"
 
+// Some GDT Constant
 #define GDT_MAX_ENTRY_COUNT 32
+/**
+ * As kernel SegmentDescriptor for code located at index 1 in GDT, 
+ * segment selector is sizeof(SegmentDescriptor) * 1 = 0x8
+*/ 
+#define GDT_KERNEL_CODE_SEGMENT_SELECTOR 0x8
+#define GDT_KERNEL_DATA_SEGMENT_SELECTOR 0x10
 
 extern struct GDTR _gdt_gdtr;
 
@@ -17,7 +24,6 @@ extern struct GDTR _gdt_gdtr;
  * @param base_mid     8-bit middle-bit base address
  * @param type_bit     4-bit contain type flags
  * @param non_system   1-bit contain system
- * ...
  */
 struct SegmentDescriptor {
     // First 32-bit
