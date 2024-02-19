@@ -1,7 +1,7 @@
 #ifndef _GDT_H
 #define _GDT_H
 
-#include "header/stdlib/stdtype.h"
+#include <stdint.h>
 
 // Some GDT Constant
 #define GDT_MAX_ENTRY_COUNT 32
