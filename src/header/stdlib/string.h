@@ -1,5 +1,5 @@
-#ifndef _STDMEM_H
-#define _STDMEM_H
+#ifndef _STRING_H
+#define _STRING_H
 
 #include <stdint.h>
 #include <stddef.h>
