@@ -6,7 +6,7 @@ CC            = gcc
 # Directory
 SOURCE_FOLDER = src
 OUTPUT_FOLDER = bin
-ISO_NAME      = os2024
+ISO_NAME      = OS2024
 
 # Flags
 WARNING_CFLAG = -Wall -Wextra -Werror

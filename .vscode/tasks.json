@@ -19,7 +19,7 @@
         {
             "type": "shell",
             "label": "Launch QEMU",
-            "command": "echo Starting QEMU&qemu-system-i386 -s -S -cdrom os2024.iso",
+            "command": "echo Starting QEMU&qemu-system-i386 -s -S -cdrom OS2024.iso",
             "isBackground": true,
             "dependsOn": "Build OS",
             "options": {
