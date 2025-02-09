@@ -24,6 +24,14 @@ extern struct GDTR _gdt_gdtr;
  * @param base_mid     8-bit middle-bit base address
  * @param type_bit     4-bit contain type flags
  * @param non_system   1-bit contain system
+ * @param descriptor_privilege_level 2-bit contain segment level privilege. For this project, either 0 for kernel or 3 for user
+ * @param p_flag       1-bit contain segment present in memory (set) or not present (clear). Use in paging
+ * @param segment_mid  4-bit middle-bit segment limit
+ * @param available_for_software 1-bit AVL
+ * @param bit64_segment 1-bit L
+ * @param default_operation_size 1-bit D/B. set = 32-bit, clear = 16-bit operand
+ * @param granularity  1-bit granularity flag. If clear, segment size (16+4bit segment limit) interpreted in byte. If set, interpreted in 4-KByte units
+ * @param base_high    8-bit
  */
 struct SegmentDescriptor {
     // First 32-bit
@@ -34,7 +42,16 @@ struct SegmentDescriptor {
     uint8_t base_mid;
     uint8_t type_bit   : 4;
     uint8_t non_system : 1;
-    // TODO : Continue SegmentDescriptor definition
+    uint8_t descriptor_privilege_level : 2;
+    uint8_t p_flag : 1;
+
+    // last 16-bit (Bit 48 to 64)
+    uint8_t segment_mid : 4;
+    uint8_t available_for_software : 1;
+    uint8_t bit64_segment : 1;
+    uint8_t default_operation_size : 1;
+    uint8_t granularity : 1;
+    uint8_t base_high;
 
 } __attribute__((packed));
 
@@ -43,9 +60,9 @@ struct SegmentDescriptor {
  * More details at https://wiki.osdev.org/GDT_Tutorial
  * @param table Fixed-width array of SegmentDescriptor with size GDT_MAX_ENTRY_COUNT
  */
-struct GlobalDescriptorTable {
-    struct SegmentDescriptor table[GDT_MAX_ENTRY_COUNT];
-} __attribute__((packed));
+    struct GlobalDescriptorTable {
+        struct SegmentDescriptor table[GDT_MAX_ENTRY_COUNT];
+    } __attribute__((packed));
 
 /**
  * GDTR, carrying information where's the GDT located and GDT size.
