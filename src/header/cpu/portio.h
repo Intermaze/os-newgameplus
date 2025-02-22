@@ -21,4 +21,16 @@ void out(uint16_t port, uint8_t data);
  */
 uint8_t in(uint16_t port);
 
+/**
+ * out16:
+ * Sends the given data to the given I/O port
+ */
+void out16(uint16_t port, uint16_t data);
+
+/**
+ * in16: 
+ * 
+ */
+uint16_t in16(uint16_t port);
+
 #endif
