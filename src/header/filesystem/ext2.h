@@ -1,3 +1,6 @@
+#ifndef _EXT2_H
+#define _EXT2_H
+
 #include "disk.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -270,7 +273,7 @@ uint32_t inode_to_local(uint32_t inode);
  * @param inode inode that already allocated
  * @param parent_inode inode of parent directory (if root directory, the parent is itself)
  */
-void init_directory_table(struct EXT2INode *node, uint32_t inode, uint32_t parent_inode);
+void init_directory_table(struct EXT2Inode *node, uint32_t inode, uint32_t parent_inode);
 /**
  * @brief check whether filesystem signature is missing or not in boot sector
  *
@@ -323,9 +326,9 @@ void deallocate_blocks(void *loc, uint32_t blocks);
 
 uint32_t deallocate_block(uint32_t *locations, uint32_t blocks, struct BlockBuffer *bitmap, uint32_t depth, uint32_t *last_bgd, bool bgd_loaded);
 
-void allocate_node_blocks(void *ptr, struct EXT2INode *node, uint32_t preferred_bgd);
+void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t preferred_bgd);
 
-void sync_node(struct EXT2INode *node, uint32_t inode);
+void sync_node(struct EXT2Inode *node, uint32_t inode);
 
 /* ============================== UTILS ================================================ */
 
@@ -340,3 +343,5 @@ void load_inode_blocks(void *ptr, void *_block, uint32_t size);
 uint32_t load_blocks_rec(void *ptr, uint32_t block, uint32_t block_size, uint32_t size, uint8_t depth);
 
 bool is_same_dir_entry(struct EXT2DirectoryEntry *entry, struct EXT2DriverRequest request, bool is_file);
+
+#endif
