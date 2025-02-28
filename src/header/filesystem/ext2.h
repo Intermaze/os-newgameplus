@@ -170,7 +170,7 @@ struct EXT2INode
 {
     uint16_t mode; // 16bit value used to indicate the format of the described file and the access rights. (for now, for file or directory)
     uint16_t uid; // 16bit value indicating the user ID of the file owner.
-    uint32_t size; // 32bit value indicating the size of the file in bytes. (lower 32 bit for filesize, higher 32 bit in i_dir_acl. Not using higher bit means file max size = 2^32-1 aka 4GB)
+    uint32_t size_low; // ("i_size" in documentation) 32bit value indicating the size of the file in bytes. (lower 32 bit for filesize, higher 32 bit in i_dir_acl. Not using higher bit means file max size = 2^32-1 aka 4GB)
     uint32_t atime; // 32bit value indicating the time the file was last accessed.
     uint32_t ctime; // 32bit value indicating the time the file was created.
     uint32_t mtime; // 32bit value indicating the time the file was last modified.
@@ -198,7 +198,7 @@ struct EXT2INode
 
     uint32_t generation; // 32bit value indicating the file version (used by NFS). [NOT USED]
     uint32_t file_acl; // 32bit value indicating the block number containing the extended attributes. In revision 0 this value is always 0 [NOT USED]
-    uint32_t dir_acl; // In revision 0 this 32bit value is always 0. In revision 1, for regular files this 32bit value contains the high 32 bits of the 64bit file size. [NOT USED]
+    uint32_t size_high; // ("i_dir_acl" in documentation) In revision 0 this 32bit value is always 0. In revision 1, for regular files this 32bit value contains the high 32 bits of the 64bit file size. [NOT USED]
 
     uint32_t faddr; // 32bit value indicating the fragment address. 
 
@@ -246,14 +246,44 @@ struct EXT2DirectoryEntry
  *  REGULAR function
  */
 
+ /**
+ * @brief get name of a directory entry, because name is dynamic, its available after the struct
+ * @param entry pointer of the directory entry
+ * @return entry name with length of entry->name_len
+ */
 char *get_entry_name(void *entry);
 
+/**
+ * @brief get directory entry from directory table, because
+ * its list with dynamic size of each item, offset
+ * (byte location) is used instead of index
+ * @param ptr pointer of directory table
+ * @param offset entry offset from ptr
+ * @return pointer of directory entry with such offset
+ */
 struct EXT2DirectoryEntry *get_directory_entry(void *ptr, uint32_t offset);
 
+/**
+ * @brief get next entry of a directory entry, it is located
+ * after the entry rec len
+ * @param entry pointer of entry
+ * @returns next entry
+ */
 struct EXT2DirectoryEntry *get_next_directory_entry(struct EXT2DirectoryEntry *entry);
 
+/**
+ * @brief get record length of a directory entry
+ * that has dynamic size based on its name length, struct size is 12
+ * and after that the buffer will contain its name char * that needs to aligned at 4 bytes boundaries
+ * @param name_len entry name length (includes null terminator)
+ * @returns sizeof(EXT2DirectoryEntry) + name_len aligned 4 bytes
+ */
 uint16_t get_entry_record_len(uint8_t name_len);
 
+/**
+ * @brief get first directory entry child offset
+ * @return offset from the directory table
+ */
 uint32_t get_dir_first_child_offset(void *ptr);
 
 
@@ -322,7 +352,7 @@ int8_t write(struct EXT2DriverRequest *request);
 
 int8_t delete_entry(struct EXT2DriverRequest request);
 
-int8_t move_dir(struct EXT2DriverRequest request_src, struct EXT2DriverRequest dst_request);
+// int8_t move_dir(struct EXT2DriverRequest request_src, struct EXT2DriverRequest dst_request);
 
 /* =============================== MEMORY ==========================================*/
 
