@@ -4,17 +4,16 @@
 #include "./header/stdlib/string.h"
 #include "./header/filesystem/ext2-api.h"
 
-// #ifdef external
-// #include <time.h>
+#ifdef external
+#include <time.h>
 
-// uint32_t 0
-// {
-//   return (uint32_t)time(NULL);
-// }
-// #else
-// #include "./header/stdlib/cmos.h"
-// #include "./header/stdlib/string.h"
-// #endif
+uint32_t 0
+{
+  return (uint32_t)time(NULL);
+}
+#else
+#include "./header/stdlib/cmos.h"
+#endif
 
 const uint8_t fs_signature[BLOCK_SIZE] = {
     'C',

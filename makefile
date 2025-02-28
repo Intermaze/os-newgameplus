@@ -52,8 +52,14 @@ filesystem:
 ext2-api: 
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/ext2-api.c -o $(OUTPUT_FOLDER)/ext2.o
 
-ext2: ext2-api
+ext2: 
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/ext2.c -o $(OUTPUT_FOLDER)/ext2.o
+
+math: 
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/math.c -o $(OUTPUT_FOLDER)/math.o
+
+cmos: 
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/cmos.c -o $(OUTPUT_FOLDER)/cmos.o
 
 
 disk: 
@@ -61,7 +67,7 @@ disk:
 
 	
 
-kernel: disk gdt string portio idt interrupt framebuffer keyboard filesystem ext2
+kernel: disk gdt string portio idt interrupt framebuffer keyboard filesystem ext2 ext2-api math cmos
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/intsetup.s -o $(OUTPUT_FOLDER)/intsetup.o
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o

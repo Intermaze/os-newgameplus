@@ -7,6 +7,8 @@
 #include "header/cpu/idt.h"
 #include "header/driver/keyboard.h"
 #include "header/filesystem/disk.h"
+#include "header/filesystem/ext2.h"
+#include "header/filesystem/ext2-api.h"
 
 // void kernel_setup(void) {
 //     load_gdt(&_gdt_gdtr);
