@@ -318,16 +318,44 @@ int8_t move_dir(struct EXT2DriverRequest request_src, struct EXT2DriverRequest d
 
 /* =============================== MEMORY ==========================================*/
 
+/**
+ * @brief get a free inode from the disk, assuming it is always
+ * available
+ * @return new inode
+ */
 uint32_t allocate_node(void); 
 
+/**
+ * @brief deallocate node from the disk, will also deallocate its used blocks
+ * also all of the blocks of indirect blocks if necessary
+ * @param inode that needs to be deallocated
+ */
 void deallocate_node(uint32_t inode);
 
+/**
+ * @brief deallocate node blocks
+ * @param locations node->block
+ * @param blocks number of blocks
+ */
 void deallocate_blocks(void *loc, uint32_t blocks);
 
 uint32_t deallocate_block(uint32_t *locations, uint32_t blocks, struct BlockBuffer *bitmap, uint32_t depth, uint32_t *last_bgd, bool bgd_loaded);
 
+/**
+ * @brief write node->block in the given node, will allocate
+ * at least node->blocks number of blocks, if first 12 item of node-> block
+ * is not enough, will use indirect blocks
+ * @param ptr the buffer that needs to be written
+ * @param node pointer of the node
+ * @param preffered_bgd it is located at the node inode bgd
+ */
 void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t preferred_bgd);
 
+/**
+ * @brief update the node to the disk
+ * @param node pointer of node
+ * @param inode location of the node
+ */
 void sync_node(struct EXT2Inode *node, uint32_t inode);
 
 /* ============================== UTILS ================================================ */
