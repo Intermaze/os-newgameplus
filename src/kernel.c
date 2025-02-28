@@ -8,7 +8,6 @@
 #include "header/driver/keyboard.h"
 #include "header/filesystem/disk.h"
 #include "header/filesystem/ext2.h"
-#include "header/filesystem/ext2-api.h"
 
 // void kernel_setup(void) {
 //     load_gdt(&_gdt_gdtr);
@@ -25,9 +24,24 @@ void kernel_setup(void) {
    
     int row = 0, col = 0;
     keyboard_state_activate();
-    struct BlockBuffer b;
-    for (int i = 0; i < 512; i++) b.buf[i] = 0x61;
-    write_blocks(&b, 17, 1);
+    initialize_filesystem_ext2();
+    char buffer[20] = "Hello, EXT2!";
+    struct EXT2DriverRequest req =
+    {
+        .buf = buffer,
+        .name = "halo",
+        .inode = 1,
+        .buffer_size = 20,
+        .name_len = 4,
+    };
+    int8_t retval;
+    retval = write(&req);
+    (void)retval;
+
+    if (retval != 0){
+        framebuffer_write(row, col, 'E', 0xF, 0);
+    }
+
     while (true) {
         char c;
         get_keyboard_buffer(&c);
