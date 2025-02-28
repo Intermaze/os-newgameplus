@@ -49,10 +49,19 @@ keyboard:
 filesystem: 
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/disk.c -o $(OUTPUT_FOLDER)/disk.o
 
+ext2-api: 
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/ext2-api.c -o $(OUTPUT_FOLDER)/ext2.o
+
+ext2: ext2-api
+	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/ext2.c -o $(OUTPUT_FOLDER)/ext2.o
+
+
 disk: 
 	@qemu-img create -f raw $(OUTPUT_FOLDER)/$(DISKNAME).bin 4M
 
-kernel: disk gdt string portio idt interrupt framebuffer keyboard filesystem
+	
+
+kernel: disk gdt string portio idt interrupt framebuffer keyboard filesystem ext2
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/intsetup.s -o $(OUTPUT_FOLDER)/intsetup.o
 	@$(ASM) $(AFLAGS) $(SOURCE_FOLDER)/kernel-entrypoint.s -o $(OUTPUT_FOLDER)/kernel-entrypoint.o
 	@$(CC) $(CFLAGS) $(SOURCE_FOLDER)/kernel.c -o $(OUTPUT_FOLDER)/kernel.o
