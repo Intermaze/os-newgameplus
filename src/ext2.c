@@ -89,7 +89,7 @@ const uint8_t fs_signature[BLOCK_SIZE] = {
 struct EXT2Superblock sblock = {}; 
 struct BlockBuffer block_buffer = {}; 
 struct EXT2BlockGroupDescriptorTable bgd_table = {};
-struct EXT2InodeTable inode_table_buf = {};
+struct EXT2INodeTable inode_table_buf = {};
 
 /* REGULAR FUNCTION */
 
