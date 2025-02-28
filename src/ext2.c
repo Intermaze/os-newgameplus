@@ -207,7 +207,45 @@ int8_t delete_entry(struct EXT2DriverRequest request);
 
 /* =============================== MEMORY ==========================================*/
 
-uint32_t allocate_node(void); 
+// assume node always available
+uint32_t allocate_node(void){
+  uint32_t bgd = -1;
+  for (uint32_t i = 0; i < GROUPS_COUNT; i++) //find first bgd with free inode
+  {
+    if (bgd_table.table[i].free_inodes_count > 0)
+    {
+      bgd = i;
+      break;
+    }
+  }
+
+  // search free node
+  read_blocks(&block_buffer, bgd_table.table[bgd].inode_bitmap, 1);
+  uint32_t inode = bgd * INODES_PER_GROUP + 1;
+  uint32_t location = 0;
+  for (uint32_t i = 0; i < INODES_PER_GROUP; i++)
+  {
+    uint8_t byte = block_buffer.buf[i / 8]; //byte & offset logic unexplored
+    uint8_t offset = 7 - i % 8;
+    if (!((byte >> offset) & 1u))
+    {
+      location = i;
+      // set flag of the inode
+      block_buffer.buf[i / 8] |= 1u << offset;
+      break;
+    }
+  }
+  // update inode_bitmap, mark inode as 1 (used)
+  write_blocks(&block_buffer, bgd_table.table[bgd].inode_bitmap, 1); 
+
+  inode += location;
+
+  bgd_table.table[bgd].free_inodes_count--;
+
+  write_blocks(&bgd_table, 2, 1);
+
+  return inode;
+}
 
 void deallocate_node(uint32_t inode);
 
