@@ -38,12 +38,6 @@
 #define EXT2_FT_UNKNOWN 0 // Unknown File Type
 #define EXT2_FT_REG_FILE 1 // Regular File
 #define EXT2_FT_DIR 2 // Directory
-#define EXT2_FT_CHRDEV 3 // Character Device [NOT USED]
-#define EXT2_FT_BLKDEV 4 // Block Device [NOT USED]
-#define EXT2_FT_FIFO 5 // Buffer file [NOT USED]
-#define EXT2_FT_SOCK 6 // Socket File [NOT USED]
-#define EXT2_FT_SYMLINK 7 // Symbolic Link File [NOT USED]
-
 
 /**
  * EXT2DriverRequest
@@ -161,17 +155,9 @@ struct EXT2BlockGroupDescriptorTable
 
 struct EXT2Inode
 {
-    uint16_t i_uid; // 16bit value indicating the user ID of the file owner.
+    uint16_t i_mode; // 16bit value indicating the file type and the access rights.
     uint32_t i_size; // 32bit value indicating the size of the file in bytes.
-    uint32_t i_atime; // 32bit value indicating the time the file was last accessed.
-    uint32_t i_ctime; // 32bit value indicating the time the file was created.
-    uint32_t i_mtime; // 32bit value indicating the time the file was last modified.
-    uint32_t i_dtime; // 32bit value representing the number of seconds since january 1st 1970, of when the inode was deleted. 
-
-    uint16_t i_gid; // 16bit value indicating the group ID of the file owner. [NOT USED]
-    uint16_t i_links_count; // 16bit value indicating the number of hard links to the file.  [NOT USED]
     uint32_t i_blocks; // 32bit value indicating the number of blocks used by the file.
-    uint32_t i_flags; // 32bit value indicating the file flags. [NOT USED]
 
     /**
      * 15 x 32bit block numbers pointing to the blocks containing the data for this inode
@@ -187,15 +173,6 @@ struct EXT2Inode
      *  
      */
     uint32_t i_block[15];
-
-    uint32_t i_generation; // 32bit value indicating the file version (used by NFS). [NOT USED]
-    uint32_t i_file_acl; // 32bit value indicating the block number containing the extended attributes. In revision 0 this value is always 0 [NOT USED]
-    uint32_t i_dir_acl; // 32bit value indicating the block number containing the extended attributes. In revision 0 this value is always 0 [NOT USED]
-
-    uint32_t i_faddr; // 32bit value indicating the fragment address. 
-
-    uint32_t i_osd1[3]; // 12 bytes of OS dependent data. [don't know what is this]
-
 
 }__attribute__((packed));
 
@@ -225,7 +202,7 @@ struct EXT2DirectoryEntry
     /**
      * 8bit value indicating the length of the file name.
      */
-    uint8_t name_len;
+    uint16_t name_len;
 
     /**
      * 8bit unsigned value used to indicate file type.
@@ -348,6 +325,8 @@ uint32_t deallocate_block(uint32_t *locations, uint32_t blocks, struct BlockBuff
  * @param ptr the buffer that needs to be written
  * @param node pointer of the node
  * @param preffered_bgd it is located at the node inode bgd
+ * 
+ * @attention only implement until doubly indirect block, if you want to implement triply indirect block please increase the storage size to at least 256MB
  */
 void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t preferred_bgd);
 

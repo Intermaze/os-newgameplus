@@ -101,8 +101,9 @@ char *get_entry_name(void *entry)
 
 struct EXT2DirectoryEntry *get_directory_entry(void *ptr, uint32_t offset)
 {
-    return (struct EXT2DirectoryEntry *)((uint8_t *)ptr + offset);
+    return (struct EXT2DirectoryEntry *)(ptr + offset);
 }
+
 struct EXT2DirectoryEntry *get_next_directory_entry(struct EXT2DirectoryEntry *entry)
 {
     return get_directory_entry(entry, entry->rec_len);
@@ -114,9 +115,9 @@ uint16_t get_entry_record_len(uint8_t name_len)
 
     uint32_t cmp = len / 4; 
     if (len % 4 == 0){
-        return cmp;
+        return len;
     }
-    return cmp + 1;
+    return (cmp + 1) * 4;
 }
 
 uint32_t get_dir_first_child_offset(void *ptr)
@@ -136,7 +137,7 @@ uint32_t inode_to_bgd(uint32_t inode){
 }
 
 uint32_t inode_to_local(uint32_t inode){
-    return (inode -1) % INODES_PER_GROUP;
+    return (inode - 1) % INODES_PER_GROUP;
 }
 
 void init_directory_table(struct EXT2Inode *node, uint32_t inode, uint32_t parent_inode){
@@ -189,14 +190,111 @@ uint32_t allocate_node(void){
         }
     }
     
+    if(bgd == -1) return 0;
+
+    read_blocks(&block_buffer, bgd_table.table[bgd].bg_inode_bitmap, 1);
+    uint32_t inode = bgd * INODES_PER_GROUP + 1;
+    for(uint32_t i = 0; i < INODES_PER_GROUP; i++){
+        if(!(block_buffer.buf[i / 8] & (1 << (i % 8)))){
+            block_buffer.buf[i / 8] |= (1 << (i % 8));
+            bgd_table.table[bgd].bg_free_inodes_count--;
+            write_blocks(&block_buffer, bgd_table.table[bgd].bg_inode_bitmap, 1);
+            return inode + i;
+        }
+    }
 }
 
-void deallocate_node(uint32_t inode);
+void deallocate_node(uint32_t inode){
+    uint32_t bgd = inode_to_bgd(inode);
+    read_blocks(&block_buffer, bgd_table.table[bgd].bg_inode_bitmap, 1);
+    block_buffer.buf[inode_to_local(inode) / 8] &= ~(1 << (inode_to_local(inode) % 8));
+    bgd_table.table[bgd].bg_free_inodes_count++;
+    write_blocks(&block_buffer, bgd_table.table[bgd].bg_inode_bitmap, 1);
+    write_blocks(&bgd_table, 2, 1);
+}
 
-void deallocate_blocks(void *loc, uint32_t blocks);
+void deallocate_blocks(void *loc, uint32_t blocks){
+    if(blocks == 0) return;
+    uint32_t last_bgd = -1;
+    uint32_t deallocated;
+    
+    for(uint32_t i = 0; i < 15 && blocks > 0; i++){
+        if(i < 12) deallocated = deallocate_block(loc, blocks, &block_buffer, 0, &last_bgd, false);
+        else deallocated = deallocate_block(loc, blocks, &block_buffer, i - 11, &last_bgd, false);
+        blocks -= deallocated;
+    }
 
-uint32_t deallocate_block(uint32_t *locations, uint32_t blocks, struct BlockBuffer *bitmap, uint32_t depth, uint32_t *last_bgd, bool bgd_loaded);
+    write_blocks(&block_buffer, bgd_table.table[last_bgd].bg_block_bitmap, 1);
+    write_blocks(&bgd_table, 2, 1);
+}
 
-void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t preferred_bgd);
+uint32_t deallocate_block(uint32_t *locations, uint32_t blocks, struct BlockBuffer *bitmap, uint32_t depth, uint32_t *last_bgd, bool bgd_loaded){
+    if(blocks == 0) return 0;
+    uint32_t bgd = *locations / BLOCKS_PER_GROUP;
+    if (!bgd_loaded || bgd != *last_bgd)
+    {
+        if (bgd_loaded)
+        {
+        // update previous bgd_bitmap
+        write_blocks(bitmap, bgd_table.table[*last_bgd].bg_block_bitmap, 1);
+        }
+        // load a new one
+        read_blocks(bitmap, bgd_table.table[bgd].bg_block_bitmap, 1);
+        *last_bgd = bgd;
+    }
+    uint32_t local_idx = *locations % BLOCKS_PER_GROUP;
+    uint8_t offset = 7 - local_idx % 8;
+    // set flag of the block bitmap
+    bitmap->buf[local_idx / 8] &= 0xFFu ^ (1u << offset);
+    bgd_table.table[*last_bgd].bg_free_blocks_count++;
+    if (depth == 0)
+    {
+        return 1;
+    }
+    struct BlockBuffer child_buf;
 
-void sync_node(struct EXT2Inode *node, uint32_t inode);
+    // load the direct block
+    read_blocks(child_buf.buf, *locations, 1);
+    uint32_t *child_loc = (uint32_t *)child_buf.buf;
+    uint32_t deallocated = 0;
+    for (uint32_t i = 0; i < BLOCK_SIZE / 4u; i++)
+    {
+        uint32_t new_deallocated = deallocate_block(child_loc, blocks, bitmap, depth - 1, last_bgd, true);
+        deallocated += new_deallocated;
+        blocks -= new_deallocated;
+        if (blocks == 0)
+        {
+        return deallocated;
+        }
+    }
+    return deallocated;
+}
+
+void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t preferred_bgd){
+    for(uint32_t i = 0; i < 15; i++){
+        if(i < 12){
+            node->i_block[i] = allocate_node();
+            write_blocks(ptr, node->i_block[i], 1);
+        }
+        else if(i == 12){
+            node->i_block[i] = allocate_node();
+            write_blocks(ptr, node->i_block[i], 1);
+            struct BlockBuffer block;
+            uint32_t *block_ptr = block.buf;
+            for(uint32_t j = 0; j < BLOCK_SIZE / 4; j++){
+                block_ptr[j] = allocate_node();
+                write_blocks(ptr, block_ptr[j], 1);
+            }
+            write_blocks(&block, node->i_block[i], 1);
+        }
+    }
+}
+
+void sync_node(struct EXT2Inode *node, uint32_t inode){
+    uint32_t bgd = inode_to_bgd(inode);
+    uint32_t local = inode_to_local(inode);
+
+    read_blocks(&inode_table_buf, bgd_table.table[bgd].bg_inode_bitmap, INODES_TABLE_BLOCK_COUNT);
+    inode_table_buf.table[local] = *node;
+    write_blocks(&inode_table_buf, bgd_table.table[bgd].bg_inode_bitmap, INODES_TABLE_BLOCK_COUNT);
+}
