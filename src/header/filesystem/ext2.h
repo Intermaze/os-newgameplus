@@ -68,6 +68,7 @@ struct EXT2Superblock
     uint32_t s_free_blocks_count;   // 32bit value indicating the total number of free blocks, including the number of reserved blocks 
     uint32_t s_free_inodes_count;   // 32bit value indicating the total number of free inodes. This is a sum of all free inodes of all the block groups.
     uint32_t s_first_data_block;    // 32bit value identifying the first data block, in other word the id of the block containing the superblock structure.
+    uint32_t s_first_ino;           // 32bit value indicating the first inode that can be used. Set this to 1, indicating root inode (maybe)
 
     uint32_t s_blocks_per_group;    
     /** 32bit value indicating the total number of blocks per group. 
@@ -281,17 +282,38 @@ bool is_directory_empty(uint32_t inode);
 
 /* =============================== CRUD FUNC ======================================== */
 
-int8_t read_dir(struct EXT2DriverRequest *request);
+/**
+ * @brief EXT2 Folder / Directory read
+ * @param request buf point to struct EXT2 Directory
+ * @return Error code: 0 success - 1 not a folder - 2 not found - 3 parent folder invalid - -1 unknown
+ */
+int8_t read_directory(struct EXT2DriverRequest *prequest);
 
+/**
+ * @brief EXT2 read, read a file from file system
+ * @param request All attribute will be used except is_dir for read, buffer_size will limit reading count
+ * @return Error code: 0 success - 1 not a file - 2 not enough buffer - 3 not found - 4 parent folder invalid - -1 unknown
+ */
 int8_t read(struct EXT2DriverRequest request);
 
-int8_t read_next_dir_table(struct EXT2DriverRequest request);
+int8_t read_next_directory_table(struct EXT2DriverRequest request);
 
+/**
+ * @brief EXT2 write, write a file or a folder to file system
+ *
+ * @param All attribute will be used for write except is_dir, buffer_size == 0 then create a folder / directory. It is possible that exist file with name same as a folder
+ * @return Error code: 0 success - 1 file/folder already exist - 2 invalid parent folder - -1 unknown
+ */
 int8_t write(struct EXT2DriverRequest *request);
 
-int8_t delete_entry(struct EXT2DriverRequest request);
+/**
+ * @brief EXT2 delete, delete a file or empty directory in file system
+ *  @param request buf and buffer_size is unused, is_dir == true means delete folder (possible file with name same as folder)
+ * @return Error code: 0 success - 1 not found - 2 folder is not empty - 3 parent folder invalid -1 unknown
+ */
+int8_t delete(struct EXT2DriverRequest request);
 
-int8_t move_dir(struct EXT2DriverRequest request_src, struct EXT2DriverRequest dst_request);
+int8_t resolve_path(struct EXT2DriverRequest *request);
 
 /* =============================== MEMORY ==========================================*/
 

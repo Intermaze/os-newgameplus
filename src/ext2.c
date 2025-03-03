@@ -181,6 +181,7 @@ void create_ext2(void){
     sblock.s_blocks_per_group = BLOCKS_PER_GROUP;
     sblock.s_inodes_per_group = INODES_PER_GROUP;
     sblock.s_magic = EXT2_SUPER_MAGIC;
+    sblock.s_first_ino = 1;
     write_blocks(&sblock, 1, 1);
 
     struct BlockBuffer inode_bitmap;
@@ -273,6 +274,52 @@ bool is_directory_empty(uint32_t inode){
     uint32_t offset = get_dir_first_child_offset(&block);
     struct EXT2DirectoryEntry *entry = get_directory_entry(&block, offset);
     return entry->inode == 0;
+}
+
+/* =============================== CRUD FUNC ======================================== */
+
+int8_t read_directory(struct EXT2DriverRequest *request);
+
+int8_t read(struct EXT2DriverRequest request);
+
+int8_t read_next_directpry_table(struct EXT2DriverRequest request);
+
+int8_t write(struct EXT2DriverRequest *request);
+
+int8_t delete(struct EXT2DriverRequest request);
+
+int8_t move_dir(struct EXT2DriverRequest request_src, struct EXT2DriverRequest dst_request);
+
+int8_t resolve_path(struct EXT2DriverRequest *request){
+  if (request->name_len == 0) return 1;
+  if (request->name[0] == '/'){
+    // absolute path
+    request->inode = sblock.s_first_ino;
+    request->name++;
+    request->name_len--;
+    return resolve_path(request);
+  }
+  uint32_t len = 0;
+  while (len < request->name_len && request->name[len] != '/'){
+    len++;
+  }
+  if (len == request->name_len){
+    // got the basic path
+    return 0;
+  }
+   // read directory
+   uint8_t prev_name_len = request->name_len;
+   // bool prev_inode_only = request->inode_only;
+   request->name_len = len;
+   // request->inode_only = TRUE;
+   int8_t retval = read_directory(request);
+   if (retval != 0)
+     return retval;
+   // if abc/de, from name length 6 to 6 - 3 - 1 = 2 (de)
+   request->name_len = prev_name_len - len - 1;
+   request->name += len + 1;
+   // request->inode_only = prev_inode_only;
+   return resolve_path(request);
 }
 
 /* =============================== MEMORY ==========================================*/
