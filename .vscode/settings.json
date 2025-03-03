@@ -2,6 +2,7 @@
     "files.associations": {
         "*.cu": "cpp",
         "stdint.h": "c",
-        "disk.h": "c"
+        "disk.h": "c",
+        "ext2.h": "c"
     }
 }

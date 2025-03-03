@@ -26,9 +26,24 @@ void kernel_setup(void) {
    
     int row = 0, col = 0;
     keyboard_state_activate();
-    struct BlockBuffer b;
-    for (int i = 0; i < 512; i++) b.buf[i] = 0x61;
-    write_blocks(&b, 17, 1);
+
+    initialize_filesystem_ext2();
+    char buffer[20] = "JANCOK";
+    struct EXT2DriverRequest req =
+    {
+        .buf = buffer,
+        .name = "halo",
+        .inode = 1,
+        .buffer_size = 20,
+        .name_len = 4,
+    };
+    int8_t retval;
+    retval = write(&req);
+    (void)retval;
+    
+    // struct BlockBuffer b;
+    // for (int i = 0; i < 512; i++) b.buf[i] = 0x61;
+    // write_blocks(&b, 17, 1);
     while (true) {
         char c;
         get_keyboard_buffer(&c);

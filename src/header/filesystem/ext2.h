@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include "../stdlib/stdtype.h"
 
 
 /* -- IF2230 File System constants -- */
@@ -38,6 +39,7 @@
 #define EXT2_FT_UNKNOWN 0 // Unknown File Type
 #define EXT2_FT_REG_FILE 1 // Regular File
 #define EXT2_FT_DIR 2 // Directory
+#define EXT2_FT_NEXT 3 // 
 
 /**
  * EXT2DriverRequest
@@ -116,6 +118,8 @@ struct EXT2BlockGroupDescriptor
     /**
      * 16bit value indicating the total number of free blocks for the represented group.
      */
+    uint32_t bg_inode_table;
+
     uint16_t bg_free_blocks_count;
 
     /**
@@ -350,7 +354,7 @@ uint32_t deallocate_block(uint32_t *locations, uint32_t blocks, struct BlockBuff
  * 
  * @attention only implement until doubly indirect block, if you want to implement triply indirect block please increase the storage size to at least 256MB
  */
-void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t preferred_bgd);
+void allocate_node_blocks(void *ptr, struct EXT2Inode *node);
 
 /**
  * @brief update the node to the disk
