@@ -158,6 +158,9 @@ void init_directory_table(struct EXT2Inode *node, uint32_t inode, uint32_t paren
 
     struct EXT2DirectoryEntry *root_entry = get_next_directory_entry(parent_entry);
     root_entry->inode = 0;
+
+    node->i_mode = EXT2_S_IFDIR;
+    node->i_blocks = 1;
     
     allocate_node_blocks(&block, node, inode_to_bgd(inode));
     sync_node(node, inode);
@@ -173,10 +176,103 @@ void create_ext2(void){
     sblock.s_inodes_count = GROUPS_COUNT * INODES_PER_GROUP;
     sblock.s_blocks_count = GROUPS_COUNT * BLOCKS_PER_GROUP;
     sblock.s_free_inodes_count =  sblock.s_inodes_count;
-    // sblock.s_first_data_block ;
+    sblock.s_free_blocks_count = sblock.s_blocks_count;
+    sblock.s_first_data_block = 1;
+    sblock.s_blocks_per_group = BLOCKS_PER_GROUP;
+    sblock.s_inodes_per_group = INODES_PER_GROUP;
+    sblock.s_magic = EXT2_SUPER_MAGIC;
+    write_blocks(&sblock, 1, 1);
 
-    // struct BlockBuffer block;
-    // struct EXT2DirectoryEntry *entry = get_directory_entry(&block, 0);
+    struct BlockBuffer inode_bitmap;
+    struct BlockBuffer block_bitmap;
+
+    memset(&inode_bitmap, 0, BLOCK_SIZE);
+    memset(&block_bitmap, 0, BLOCK_SIZE);
+
+    for (uint32_t i = 0; i < GROUPS_COUNT; i++){
+        uint32_t reserved_blocks = 2u + INODES_TABLE_BLOCK_COUNT; // block_bitmap, inode_bitmap, inodes_table
+        if (i == 0)
+        {
+        // 3 first block is for boot sector, superblock, and bgd table
+        reserved_blocks += 3;
+        bgd_table.table[i].bg_block_bitmap = 3;
+
+        // set block_bitmap for first block
+        uint32_t j = 0;
+        uint32_t k = 0;
+        while (j * 8 < reserved_blocks)
+        {
+            k = reserved_blocks - (j * 8);
+            if (k > 8)
+            k = 8;
+
+            // set first k bit of a byte to 1 and rest to 0
+            block_bitmap.buf[j] = 0xFFu - ((1u << (8u - k)) - 1u);
+            j++;
+        }
+
+        // make j and k actually represent last byte and bit
+        j--;
+        k--;
+        write_blocks(&block_bitmap, bgd_table.table[i].bg_block_bitmap, 1);
+
+        // set back the last 3 bitmap_block bit to 0
+        for (uint8_t l = 0; l < 3; l++)
+        {
+            uint8_t offset = 7u - k;
+            block_bitmap.buf[j] &= 0xFFu - (1u << offset);
+            if (k == 0)
+            {
+            j--;
+            k = 7;
+            }
+            else
+            k--;
+        }
+        }
+        else
+        {
+        bgd_table.table[i].bg_block_bitmap = i * sblock.s_blocks_per_group + 0;
+        write_blocks(&block_bitmap, bgd_table.table[i].bg_block_bitmap, 1);
+        }
+        bgd_table.table[i].bg_free_blocks_count = sblock.s_blocks_per_group - reserved_blocks;
+        bgd_table.table[i].bg_inode_bitmap = bgd_table.table[i].bg_block_bitmap + 1;
+
+        // write inode bitmap
+        write_blocks(&inode_bitmap, bgd_table.table[i].bg_inode_bitmap, 1);
+        bgd_table.table[i].bg_inode_bitmap = bgd_table.table[i].bg_block_bitmap + 2;
+
+        bgd_table.table[i].bg_free_inodes_count = sblock.s_inodes_per_group;
+
+        bgd_table.table[i].bg_used_dirs_count = 0;
+    }
+    write_blocks(&bgd_table, 2, 1);
+    struct EXT2Inode *root_node;
+    uint32_t root_node = allocate_node();
+    init_directory_table(&root_node, root_node, root_node);
+}
+
+void initialize_filesystem_ext2(void){
+    if(is_empty_storage()) create_ext2();
+    else{
+        read_blocks(&sblock, 1, 1);
+        read_blocks(&bgd_table, 2, 1);
+    }
+}
+
+bool is_directory_empty(uint32_t inode){
+    uint32_t bgd = inode_to_bgd(inode);
+    uint32_t local = inode_to_local(inode);
+
+    read_blocks(&block_buffer, bgd_table.table[bgd].bg_inode_bitmap, INODES_TABLE_BLOCK_COUNT);
+
+    struct EXT2Inode *node = &inode_table_buf.table[local];
+    struct BlockBuffer block;
+    read_blocks(&block, node->i_block[0], 1);
+
+    uint32_t offset = get_dir_first_child_offset(&block);
+    struct EXT2DirectoryEntry *entry = get_directory_entry(&block, offset);
+    return entry->inode == 0;
 }
 
 /* =============================== MEMORY ==========================================*/
