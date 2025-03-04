@@ -40,6 +40,9 @@ void kernel_setup(void) {
 
     retval = write(&req);
 
+        /**
+         * Idk it bootloop after writing to the disk 
+         */
     if(retval == 0){
         framebuffer_write(row, col, 0x61, 0xF, 0);
     } else {
