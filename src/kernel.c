@@ -22,13 +22,11 @@ void kernel_setup(void) {
     framebuffer_clear();
     framebuffer_set_cursor(0, 0);
 
-    create_ext2();    
-   
     int row = 0, col = 0;
     keyboard_state_activate();
 
     initialize_filesystem_ext2();
-    char buffer[20] = "JANCOK";
+    char buffer[20] = "ANJING KOK SUSAH";
     struct EXT2DriverRequest req =
     {
         .buf = buffer,
@@ -37,13 +35,17 @@ void kernel_setup(void) {
         .buffer_size = 20,
         .name_len = 4,
     };
+
     int8_t retval;
+
     retval = write(&req);
-    (void)retval;
+
+    if(retval == 0){
+        framebuffer_write(row, col, 0x61, 0xF, 0);
+    } else {
+        framebuffer_write(row, col, 0x62, 0xF, 0);
+    }
     
-    // struct BlockBuffer b;
-    // for (int i = 0; i < 512; i++) b.buf[i] = 0x61;
-    // write_blocks(&b, 17, 1);
     while (true) {
         char c;
         get_keyboard_buffer(&c);

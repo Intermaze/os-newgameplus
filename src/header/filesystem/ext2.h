@@ -15,7 +15,7 @@
 #define INODE_SIZE sizeof(struct EXT2Inode) // size of inode
 #define INODES_PER_TABLE (BLOCK_SIZE / INODE_SIZE) // number of inode per block (512 / )
 #define GROUPS_COUNT (BLOCK_SIZE / sizeof(struct EXT2BlockGroupDescriptor)) / 2u // number of groups in the filesystem
-#define BLOCKS_PER_GROUP (DISK_SPACE / GROUPS_COUNT / BLOCK_SIZE) // number of blocks per group
+#define BLOCKS_PER_GROUP (DISK_SPACE / BLOCK_SIZE / GROUPS_COUNT) // number of blocks per group
 #define INODES_TABLE_BLOCK_COUNT 16u 
 #define INODES_PER_GROUP (INODES_PER_TABLE * INODES_TABLE_BLOCK_COUNT) // number of inodes per group
 
@@ -354,7 +354,7 @@ uint32_t deallocate_block(uint32_t *locations, uint32_t blocks, struct BlockBuff
  * 
  * @attention only implement until doubly indirect block, if you want to implement triply indirect block please increase the storage size to at least 256MB
  */
-void allocate_node_blocks(void *ptr, struct EXT2Inode *node);
+void allocate_node_blocks(void *ptr, struct EXT2Inode *node, uint32_t prefered_bgd);
 
 /**
  * @brief update the node to the disk
