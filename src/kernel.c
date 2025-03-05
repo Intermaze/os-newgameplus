@@ -26,28 +26,28 @@ void kernel_setup(void) {
     keyboard_state_activate();
 
     initialize_filesystem_ext2();
-    char buffer[20] = "ANJING KOK SUSAH";
-    struct EXT2DriverRequest req =
-    {
-        .buf = buffer,
-        .name = "halo",
-        .inode = 1,
-        .buffer_size = 20,
-        .name_len = 4,
-    };
+    // char buffer[20] = "ANJING KOK SUSAH";
+    // struct EXT2DriverRequest req =
+    // {
+    //     .buf = buffer,
+    //     .name = "halo",
+    //     .inode = 1,
+    //     .buffer_size = 20,
+    //     .name_len = 4,
+    // };
 
-    int8_t retval;
+    // int8_t retval;
 
-    retval = write(&req);
+    // retval = write(&req);
 
-        /**
-         * Idk it bootloop after writing to the disk 
-         */
-    if(retval == 0){
-        framebuffer_write(row, col, 0x61, 0xF, 0);
-    } else {
-        framebuffer_write(row, col, 0x62, 0xF, 0);
-    }
+    //     /**
+    //      * Idk it bootloop after writing to the disk 
+    //      */
+    // if(retval == 0){
+    //     framebuffer_write(row, col, 0x61, 0xF, 0);
+    // } else {
+    //     framebuffer_write(row, col, 0x62, 0xF, 0);
+    // }
     
     while (true) {
         char c;

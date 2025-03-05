@@ -155,15 +155,15 @@ void init_directory_table(struct EXT2Inode *node, uint32_t inode, uint32_t paren
     struct EXT2DirectoryEntry *entry = get_directory_entry(&block, 0);
     entry->inode = inode;
     entry->file_type = EXT2_FT_DIR;
-    memcpy(get_entry_name(entry), ".", 2);
     entry->name_len = 1;
+    memcpy(get_entry_name(entry), ".", 2);
     entry->rec_len = get_entry_record_len(entry->name_len);
 
     struct EXT2DirectoryEntry *parent_entry = get_next_directory_entry(entry);
     parent_entry->inode = parent_inode;
     parent_entry->file_type = EXT2_FT_DIR;
-    memcpy(get_entry_name(parent_entry), "..", 3);
     parent_entry->name_len = 2;
+    memcpy(get_entry_name(parent_entry), "..", 3);
     parent_entry->rec_len = get_entry_record_len(parent_entry->name_len);
 
     struct EXT2DirectoryEntry *root_entry = get_next_directory_entry(parent_entry);
@@ -249,11 +249,11 @@ void create_ext2(void){
             write_blocks(&bitmap_block, bgd_table.table[i].bg_block_bitmap, 1);
         }
         bgd_table.table[i].bg_free_blocks_count = sblock.s_blocks_per_group - reserved_blocks;
-        bgd_table.table[i].bg_inode_bitmap = bgd_table.table[i].bg_block_bitmap + 1;
+        bgd_table.table[i].bg_inode_bitmap = bgd_table.table[i].bg_inode_bitmap;
 
         // write inode bitmap
         write_blocks(&bitmap_node, bgd_table.table[i].bg_inode_bitmap, 1);
-        bgd_table.table[i].bg_inode_bitmap = bgd_table.table[i].bg_block_bitmap + 2;
+        bgd_table.table[i].bg_inode_table = bgd_table.table[i].bg_inode_table;
 
         bgd_table.table[i].bg_free_inodes_count = sblock.s_inodes_per_group;
 
