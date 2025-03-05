@@ -249,11 +249,11 @@ void create_ext2(void){
             write_blocks(&bitmap_block, bgd_table.table[i].bg_block_bitmap, 1);
         }
         bgd_table.table[i].bg_free_blocks_count = sblock.s_blocks_per_group - reserved_blocks;
-        bgd_table.table[i].bg_inode_bitmap = bgd_table.table[i].bg_inode_bitmap;
+        bgd_table.table[i].bg_inode_bitmap = bgd_table.table[i].bg_block_bitmap + 1;
 
         // write inode bitmap
         write_blocks(&bitmap_node, bgd_table.table[i].bg_inode_bitmap, 1);
-        bgd_table.table[i].bg_inode_table = bgd_table.table[i].bg_inode_table;
+        bgd_table.table[i].bg_inode_table = bgd_table.table[i].bg_block_bitmap + 2;
 
         bgd_table.table[i].bg_free_inodes_count = sblock.s_inodes_per_group;
 
