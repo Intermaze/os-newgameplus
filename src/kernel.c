@@ -17,6 +17,7 @@
 void kernel_setup(void) {
     load_gdt(&_gdt_gdtr);
     pic_remap();
+    initialize_filesystem_ext2();
     initialize_idt();
     activate_keyboard_interrupt();
     framebuffer_clear();
@@ -25,7 +26,7 @@ void kernel_setup(void) {
     int row = 0, col = 0;
     keyboard_state_activate();
 
-    initialize_filesystem_ext2();
+
     // char buffer[20] = "ANJING KOK SUSAH";
     // struct EXT2DriverRequest req =
     // {
